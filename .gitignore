@@ -23,4 +23,7 @@ htmlcov/
 
 .env
 
+# Local-only notes and agent instructions (never push to GitHub / never on VPS via git)
+.local/
+
 generated_site/
