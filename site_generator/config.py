@@ -23,12 +23,12 @@ class Config:
 
         token = os.environ.get("PANDASCORE_TOKEN", "")
         if not token:
-            raise ValueError("PANDASCORE_TOKEN environment variable is required")
+            raise ValueError("Не задана переменная окружения PANDASCORE_TOKEN")
 
         return cls(
             pandascore_token=token,
             site_url=os.environ.get("SITE_URL", "https://site-generator.ozzy1986.com").rstrip("/"),
-            site_name=os.environ.get("SITE_NAME", "Esports Matches Schedule"),
+            site_name=os.environ.get("SITE_NAME", "Киберспортивные матчи"),
             site_timezone=os.environ.get("SITE_TIMEZONE", "UTC"),
             output_dir=base / os.environ.get("OUTPUT_DIR", "generated_site"),
             base_dir=base,

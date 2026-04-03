@@ -18,7 +18,16 @@ class TestAdminIndex:
     def test_get(self, client) -> None:
         resp = client.get("/")
         assert resp.status_code == 200
-        assert b"Generate Site" in resp.data
+        assert "Собрать сайт".encode("utf-8") in resp.data
+
+    def test_admin_alias(self, client) -> None:
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert "Панель управления".encode("utf-8") in resp.data
+
+    def test_admin_static_alias(self, client) -> None:
+        resp = client.get("/admin/static/admin/styles.css")
+        assert resp.status_code == 200
 
 
 class TestGenerateEndpoint:
@@ -50,3 +59,15 @@ class TestOpenOutput:
         mock_config.return_value.output_dir = tmp_path / "nonexistent"
         resp = client.post("/open-output")
         assert resp.status_code == 404
+
+    @patch("app._can_open_output_directory", return_value=False)
+    @patch("app.Config.from_env")
+    def test_unsupported_environment(self, mock_config, mock_can_open, client, tmp_path) -> None:
+        output_dir = tmp_path / "generated_site"
+        output_dir.mkdir()
+        mock_config.return_value.output_dir = output_dir
+
+        resp = client.post("/open-output")
+
+        assert resp.status_code == 501
+        assert resp.get_json()["success"] is False

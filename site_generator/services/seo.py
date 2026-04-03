@@ -4,6 +4,28 @@ from dataclasses import dataclass
 
 from site_generator.models import DaySchedule
 
+_DAY_TITLE_PREFIXES = {
+    "yesterday": "Результаты киберспортивных матчей",
+    "today": "Киберспортивные матчи сегодня",
+    "tomorrow": "Киберспортивные матчи завтра",
+}
+
+
+def _match_phrase(count: int) -> str:
+    remainder_100 = count % 100
+    remainder_10 = count % 10
+
+    if 11 <= remainder_100 <= 14:
+        noun = "киберспортивных матчей"
+    elif remainder_10 == 1:
+        noun = "киберспортивного матча"
+    elif 2 <= remainder_10 <= 4:
+        noun = "киберспортивных матча"
+    else:
+        noun = "киберспортивных матчей"
+
+    return f"{count} {noun}"
+
 
 @dataclass(frozen=True)
 class PageSeo:
@@ -29,26 +51,26 @@ def build_day_seo(
     extra_kw = videogames[:8]
 
     if schedule.label == "yesterday":
-        title = f"Esports Results: {schedule.display_date}"
+        title = f"{_DAY_TITLE_PREFIXES[schedule.label]}: {schedule.display_date}"
         desc = (
-            f"{n} esports match result{'s' if n != 1 else ''} from "
-            f"{schedule.display_date}. Scores, teams, and tournament details."
+            f"Результаты {_match_phrase(n)} за {schedule.display_date}: "
+            "счёты, команды, турниры и статус встреч."
         )
     elif schedule.label == "today":
-        title = f"Esports Matches Today: {schedule.display_date}"
+        title = f"{_DAY_TITLE_PREFIXES[schedule.label]}: {schedule.display_date}"
         desc = (
-            f"{n} esports match{'es' if n != 1 else ''} scheduled for today, "
-            f"{schedule.display_date}. Live scores and upcoming games."
+            f"Расписание {_match_phrase(n)} на {schedule.display_date}: "
+            "живые статусы, турниры, команды и ближайшие игры."
         )
     else:
-        title = f"Upcoming Esports Matches: {schedule.display_date}"
+        title = f"{_DAY_TITLE_PREFIXES[schedule.label]}: {schedule.display_date}"
         desc = (
-            f"{n} esports match{'es' if n != 1 else ''} scheduled for "
-            f"{schedule.display_date}. Preview upcoming tournaments and matchups."
+            f"Анонс {_match_phrase(n)} на {schedule.display_date}: "
+            "предстоящие турниры, пары команд и формат встреч."
         )
 
     keywords = ", ".join(
-        ["esports", "matches", "schedule", schedule.display_date] + extra_kw,
+        ["киберспорт", "матчи", "расписание", "результаты", schedule.display_date] + extra_kw,
     )
     canonical = f"{site_url}/{schedule.label}/"
 
@@ -60,25 +82,25 @@ def build_day_seo(
         og_title=title,
         og_description=desc,
         og_url=canonical,
-        og_image=f"{site_url}/assets/og-image.png",
+        og_image=f"{site_url}/assets/logo.svg",
     )
 
 
 def build_home_seo(site_url: str, site_name: str) -> PageSeo:
     """Build SEO metadata for the landing/index page."""
     return PageSeo(
-        title=f"{site_name} — Yesterday, Today, Tomorrow",
+        title=f"{site_name} — вчера, сегодня, завтра",
         description=(
-            "Browse esports match schedules, live scores, and results "
-            "across all major competitive games. Updated daily."
+            "Расписание, результаты и актуальные статусы киберспортивных матчей "
+            "на вчера, сегодня и завтра. Обновляется ежедневно."
         ),
-        keywords="esports, matches, schedule, results, live scores, tournaments",
+        keywords="киберспорт, матчи, расписание, результаты, live, турниры",
         canonical_url=f"{site_url}/",
         og_title=site_name,
         og_description=(
-            "Browse esports match schedules, live scores, and results. "
-            "Updated daily."
+            "Смотрите расписание, результаты и статусы киберспортивных матчей. "
+            "Обновляется ежедневно."
         ),
         og_url=f"{site_url}/",
-        og_image=f"{site_url}/assets/og-image.png",
+        og_image=f"{site_url}/assets/logo.svg",
     )

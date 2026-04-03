@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ seo.title }}</title>
     <meta name="description" content="{{ seo.description }}">
@@ -14,6 +15,7 @@
     <meta property="og:image" content="{{ seo.og_image }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:locale" content="ru_RU">
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/assets/styles.css">
     <script type="application/ld+json">{{ jsonld|safe }}</script>
@@ -22,28 +24,25 @@
     <header class="site-header">
         <div class="container header-inner">
             <a href="/" class="logo-link">
-                <img src="/assets/logo.svg" alt="{{ site_name }}" class="logo" width="48" height="48">
+                <img src="/assets/logo.svg" alt="{{ site_name }}" class="logo" width="56" height="56">
                 <span class="logo-text">{{ site_name }}</span>
             </a>
-            <nav class="main-nav" aria-label="Day navigation">
-                {% for key, sched in schedules.items() %}
-                <a href="/{{ sched.label }}/"
-                   class="nav-link{% if schedule is defined and schedule.label == sched.label %} active{% endif %}">
-                    {{ sched.label|capitalize }}
-                    <span class="nav-date">{{ sched.display_date }}</span>
-                </a>
-                {% endfor %}
-            </nav>
         </div>
     </header>
 
-    <main class="container">
-        {% block content %}{% endblock %}
+    <main class="site-main">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <footer class="site-footer">
-        <div class="container">
-            <p>Data provided by <a href="https://pandascore.co" rel="noopener noreferrer" target="_blank">PandaScore</a>. Generated statically.</p>
+        <div class="container footer-inner">
+            <p>
+                Данные предоставляет
+                <a href="https://pandascore.co" rel="noopener noreferrer" target="_blank">PandaScore</a>.
+                Сайт собирается статически и обновляется ежедневно.
+            </p>
         </div>
     </footer>
 </body>

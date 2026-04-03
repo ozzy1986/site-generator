@@ -1,29 +1,37 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero">
-    <h1>Esports Match Schedule</h1>
-    <p class="hero-sub">Yesterday's results, today's action, tomorrow's matchups.</p>
+<section class="home-intro">
+    <div>
+        <p class="section-kicker">Матчи по дням</p>
+        <h1>Выберите период</h1>
+    </div>
+    <p class="section-note">Откройте вчера, сегодня или завтра, чтобы посмотреть все матчи, статусы и результаты.</p>
 </section>
 
 <div class="day-grid">
     {% for key, sched in schedules.items() %}
     <a href="/{{ sched.label }}/" class="day-card day-card--{{ sched.label }}">
-        <h2 class="day-card__title">{{ sched.label|capitalize }}</h2>
+        <div class="day-card__top">
+            <h2 class="day-card__title">{{ sched.display_label }}</h2>
+            <span class="day-card__badge">Матчей: {{ sched.matches|length }}</span>
+        </div>
         <time class="day-card__date" datetime="{{ sched.date_str }}">{{ sched.display_date }}</time>
-        <p class="day-card__count">
-            {{ sched.matches|length }} match{{ 'es' if sched.matches|length != 1 else '' }}
-        </p>
+
         {% if sched.matches %}
         <ul class="day-card__preview">
-            {% for m in sched.matches[:3] %}
+            {% for m in sched.matches[:4] %}
             <li>{{ m.name | truncate(40) }}</li>
             {% endfor %}
-            {% if sched.matches|length > 3 %}
-            <li class="more">+{{ sched.matches|length - 3 }} more</li>
+            {% if sched.matches|length > 4 %}
+            <li class="more">+ещё {{ sched.matches|length - 4 }}</li>
             {% endif %}
         </ul>
+        {% else %}
+        <p class="day-card__empty">На этот день матчи пока не найдены.</p>
         {% endif %}
+
+        <span class="day-card__cta">Открыть день</span>
     </a>
     {% endfor %}
 </div>

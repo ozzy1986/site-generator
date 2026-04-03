@@ -1,34 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site Generator — Admin</title>
-    <link rel="icon" href="{{ url_for('static', filename='site/favicon.svg') }}" type="image/svg+xml">
-    <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
+    <title>Генератор сайта — админка</title>
+    <link rel="icon" href="/admin/static/site/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/admin/static/admin/styles.css">
 </head>
 <body>
-    <div class="admin-shell">
-        <header class="admin-header">
-            <img src="{{ url_for('static', filename='site/logo.svg') }}" alt="Logo" class="admin-logo" width="64" height="64">
-            <h1>Esports Site Generator</h1>
-            <p class="admin-sub">Fetch PandaScore data and build a static schedule site.</p>
-        </header>
+    <div class="admin-page">
+        <main class="admin-shell">
+            <section class="hero-card">
+                <div class="brand-row">
+                    <img src="/admin/static/site/logo.svg" alt="Логотип" class="admin-logo" width="72" height="72">
+                    <div class="brand-copy">
+                        <p class="eyebrow">Панель управления</p>
+                        <h1>Генератор киберспортивного сайта</h1>
+                        <p class="admin-sub">
+                            Собирает статический сайт на основе данных PandaScore и обновляет страницы
+                            за вчера, сегодня и завтра.
+                        </p>
+                    </div>
+                </div>
 
-        <main class="admin-main">
-            <button id="btn-generate" class="btn btn-primary" type="button">Generate Site</button>
+                <div class="action-row">
+                    <button id="btn-generate" class="btn btn-primary" type="button">Собрать сайт</button>
+                    <a class="btn btn-secondary" href="/" target="_blank" rel="noopener noreferrer">Открыть публичный сайт</a>
+                </div>
 
-            <div id="status" class="status-area" hidden>
-                <div id="status-spinner" class="spinner" hidden></div>
-                <div id="status-message"></div>
-            </div>
+                <div id="status" class="status-area" hidden>
+                    <div id="status-spinner" class="spinner" hidden></div>
+                    <div id="status-message"></div>
+                </div>
 
-            <button id="btn-open" class="btn btn-secondary" type="button" hidden>Open Output Folder</button>
+                <button
+                    id="btn-open"
+                    class="btn btn-ghost"
+                    type="button"
+                    hidden
+                    data-can-open-output="{{ 'true' if can_open_output else 'false' }}"
+                >Открыть каталог сборки</button>
+            </section>
+
+            <section class="info-grid" aria-label="Информация о генераторе">
+                <article class="info-card">
+                    <h2>Что делает сборка</h2>
+                    <ul class="info-list">
+                        <li>Обновляет данные матчей из PandaScore.</li>
+                        <li>Создаёт главную страницу и разделы за три дня.</li>
+                        <li>Пересобирает готовый статический сайт для Apache.</li>
+                    </ul>
+                </article>
+
+                <article class="info-card">
+                    <h2>Что создаётся</h2>
+                    <ul class="info-list">
+                        <li>Главная страница с обзором по дням.</li>
+                        <li>Страницы `вчера`, `сегодня`, `завтра`.</li>
+                        <li>SEO-мета, Open Graph и JSON-LD.</li>
+                    </ul>
+                </article>
+
+                <article class="info-card info-card--accent">
+                    <h2>Источник данных</h2>
+                    <p>
+                        Данные матчей загружаются с
+                        <a href="https://pandascore.co" target="_blank" rel="noopener noreferrer">PandaScore API</a>.
+                    </p>
+                </article>
+            </section>
         </main>
-
-        <footer class="admin-footer">
-            <p>Data: <a href="https://pandascore.co" target="_blank" rel="noopener noreferrer">PandaScore API</a></p>
-        </footer>
     </div>
 
     <script>
@@ -38,6 +80,7 @@
         var statusArea = document.getElementById('status');
         var spinner = document.getElementById('status-spinner');
         var msg = document.getElementById('status-message');
+        var canOpenOutput = btnOpen.dataset.canOpenOutput === 'true';
 
         function setStatus(html, isError) {
             statusArea.hidden = false;
@@ -51,7 +94,7 @@
             btnOpen.hidden = true;
             statusArea.hidden = false;
             spinner.hidden = false;
-            msg.innerHTML = 'Generating&hellip;';
+            msg.innerHTML = 'Собираю сайт&hellip;';
             msg.className = 'msg msg--busy';
 
             fetch('/generate', { method: 'POST' })
@@ -59,24 +102,36 @@
                 .then(function (res) {
                     if (res.data.success) {
                         var c = res.data.counts || {};
+                        var details = '<br><small>Вчера: ' + (c.yesterday || 0) +
+                            ' &middot; Сегодня: ' + (c.today || 0) +
+                            ' &middot; Завтра: ' + (c.tomorrow || 0) + '</small>';
+
+                        if (!canOpenOutput) {
+                            details += '<br><small>Каталог сборки можно открыть только локально в графической среде.</small>';
+                        }
+
                         setStatus(
-                            res.data.message +
-                            '<br><small>Yesterday: ' + (c.yesterday || 0) +
-                            ' &middot; Today: ' + (c.today || 0) +
-                            ' &middot; Tomorrow: ' + (c.tomorrow || 0) + '</small>',
+                            res.data.message + details,
                             false
                         );
-                        btnOpen.hidden = false;
+                        btnOpen.hidden = !canOpenOutput;
                     } else {
                         setStatus(res.data.message, true);
                     }
                 })
-                .catch(function (err) { setStatus('Network error: ' + err, true); })
+                .catch(function (err) { setStatus('Ошибка сети: ' + err, true); })
                 .finally(function () { btnGen.disabled = false; });
         });
 
         btnOpen.addEventListener('click', function () {
-            fetch('/open-output', { method: 'POST' });
+            fetch('/open-output', { method: 'POST' })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (res) {
+                    if (!res.data.success) {
+                        setStatus(res.data.message, true);
+                    }
+                })
+                .catch(function (err) { setStatus('Не удалось открыть каталог: ' + err, true); });
         });
     })();
     </script>

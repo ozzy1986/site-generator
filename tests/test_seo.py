@@ -20,23 +20,23 @@ def _schedule(label: str, n_matches: int = 2) -> DaySchedule:
         )
         for i in range(n_matches)
     )
-    return DaySchedule(label=label, date_str="2026-04-03", display_date="April 3, 2026", matches=cards)
+    return DaySchedule(label=label, date_str="2026-04-03", display_date="3 апреля 2026", matches=cards)
 
 
 class TestBuildDaySeo:
     def test_yesterday(self) -> None:
         seo = build_day_seo(_schedule("yesterday"), SITE_URL, SITE_NAME)
-        assert "Results" in seo.title
+        assert "Результаты" in seo.title
         assert seo.canonical_url == f"{SITE_URL}/yesterday/"
         assert seo.robots == "index, follow"
 
     def test_today(self) -> None:
         seo = build_day_seo(_schedule("today"), SITE_URL, SITE_NAME)
-        assert "Today" in seo.title
+        assert "сегодня" in seo.title
 
     def test_tomorrow(self) -> None:
         seo = build_day_seo(_schedule("tomorrow"), SITE_URL, SITE_NAME)
-        assert "Upcoming" in seo.title
+        assert "завтра" in seo.title
 
     def test_og_fields(self) -> None:
         seo = build_day_seo(_schedule("today"), SITE_URL, SITE_NAME)
@@ -49,11 +49,11 @@ class TestBuildDaySeo:
 
     def test_empty_day(self) -> None:
         seo = build_day_seo(_schedule("today", 0), SITE_URL, SITE_NAME)
-        assert "0 esports" in seo.description
+        assert "0 киберспортивных матчей" in seo.description
 
     def test_singular_match(self) -> None:
         seo = build_day_seo(_schedule("today", 1), SITE_URL, SITE_NAME)
-        assert "1 esports match " in seo.description
+        assert "1 киберспортивного матча" in seo.description
 
 
 class TestBuildHomeSeo:
@@ -61,5 +61,6 @@ class TestBuildHomeSeo:
         seo = build_home_seo(SITE_URL, SITE_NAME)
         assert isinstance(seo, PageSeo)
         assert SITE_NAME in seo.title
+        assert "вчера, сегодня, завтра" in seo.title
         assert seo.canonical_url == f"{SITE_URL}/"
         assert seo.robots == "index, follow"

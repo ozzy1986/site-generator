@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import tempfile
 from datetime import date, datetime, timedelta, timezone
@@ -17,6 +18,21 @@ from site_generator.services.seo import PageSeo, build_day_seo, build_home_seo
 
 logger = logging.getLogger(__name__)
 
+_MONTH_NAMES_RU = {
+    1: "января",
+    2: "февраля",
+    3: "марта",
+    4: "апреля",
+    5: "мая",
+    6: "июня",
+    7: "июля",
+    8: "августа",
+    9: "сентября",
+    10: "октября",
+    11: "ноября",
+    12: "декабря",
+}
+
 
 def compute_day_dates() -> tuple[date, date, date]:
     """Return *(yesterday, today, tomorrow)* in UTC."""
@@ -25,8 +41,8 @@ def compute_day_dates() -> tuple[date, date, date]:
 
 
 def format_display_date(d: date) -> str:
-    """Cross-platform date format: ``April 3, 2026``."""
-    return d.strftime("%B %d, %Y").replace(" 0", " ")
+    """Cross-platform Russian date format: ``3 апреля 2026``."""
+    return f"{d.day} {_MONTH_NAMES_RU[d.month]} {d.year}"
 
 
 def build_day_schedule(
@@ -80,6 +96,7 @@ def generate_site(config: Config) -> dict[str, Any]:
         if config.output_dir.exists():
             shutil.rmtree(config.output_dir)
         shutil.copytree(tmp_path, config.output_dir)
+        _ensure_public_permissions(config.output_dir)
 
     logger.info("Site generated in %s", config.output_dir)
     return {
@@ -156,3 +173,13 @@ def _write_day(
         tmpl.render(seo=seo, jsonld=jsonld, schedule=schedule, **ctx),
         encoding="utf-8",
     )
+
+
+def _ensure_public_permissions(output_dir: Path) -> None:
+    """Ensure Apache can traverse and serve the generated static site."""
+    if os.name == "nt":
+        return
+
+    output_dir.chmod(0o755)
+    for path in output_dir.rglob("*"):
+        path.chmod(0o755 if path.is_dir() else 0o644)

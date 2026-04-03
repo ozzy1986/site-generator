@@ -2,8 +2,12 @@
 
 {% block content %}
 <section class="day-header">
-    <h1>{{ schedule.label|capitalize }}: {{ schedule.display_date }}</h1>
-    <p class="match-count">{{ schedule.matches|length }} match{{ 'es' if schedule.matches|length != 1 else '' }}</p>
+    <div>
+        <p class="day-kicker">{{ schedule.display_label }}</p>
+        <h1>{{ schedule.display_date }}</h1>
+        <p class="match-count">Матчей: {{ schedule.matches|length }} · Время указано в UTC</p>
+    </div>
+    <a href="/" class="back-link">На главную</a>
 </section>
 
 {% if schedule.matches %}
@@ -34,7 +38,7 @@
                 {% if match.score_display %}
                 <span class="score-text">{{ match.score_display }}</span>
                 {% else %}
-                <span class="score-vs">vs</span>
+                <span class="score-vs">VS</span>
                 {% endif %}
                 <span class="match-format">{{ match.format_display }}</span>
             </div>
@@ -48,12 +52,12 @@
                 {% endif %}
             </div>
             {% elif match.teams|length == 1 %}
-            <div class="match-card__team">
+            <div class="match-card__team match-card__team--single">
                 <span class="team-name">{{ match.teams[0].name }}</span>
-                <span class="score-vs">vs TBD</span>
+                <span class="score-vs">Соперник уточняется</span>
             </div>
             {% else %}
-            <div class="match-card__tbd">{{ match.name }}</div>
+            <div class="match-card__tbd">{{ match.name or "Состав матча уточняется" }}</div>
             {% endif %}
         </div>
 
@@ -66,7 +70,7 @@
             {% endif %}
             <span class="match-card__status match-card__status--{{ match.status }}">{{ match.status_display }}</span>
             {% if match.stream_url and match.is_live %}
-            <a href="{{ match.stream_url }}" class="match-card__stream" target="_blank" rel="noopener noreferrer">Watch</a>
+            <a href="{{ match.stream_url }}" class="match-card__stream" target="_blank" rel="noopener noreferrer">Смотреть</a>
             {% endif %}
         </div>
     </article>
@@ -74,7 +78,7 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <p>No matches scheduled for this day.</p>
+    <p>На этот день матчей пока нет.</p>
 </div>
 {% endif %}
 {% endblock %}

@@ -32,10 +32,10 @@ class TestComputeDayDates:
 
 class TestFormatDisplayDate:
     def test_no_leading_zero(self) -> None:
-        assert format_display_date(date(2026, 4, 3)) == "April 3, 2026"
+        assert format_display_date(date(2026, 4, 3)) == "3 апреля 2026"
 
     def test_double_digit_day(self) -> None:
-        assert format_display_date(date(2026, 12, 15)) == "December 15, 2026"
+        assert format_display_date(date(2026, 12, 15)) == "15 декабря 2026"
 
 
 class TestBuildDaySchedule:
@@ -106,7 +106,43 @@ class TestGenerateSiteIntegration:
         assert (config.output_dir / "yesterday" / "index.html").exists()
         assert (config.output_dir / "today" / "index.html").exists()
         assert (config.output_dir / "tomorrow" / "index.html").exists()
+        home_html = (config.output_dir / "index.html").read_text(encoding="utf-8")
+        assert "Киберспорт без лишнего шума" not in home_html
+        assert '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' in home_html
+        assert "Матчи по дням" in home_html
         assert result["today"] >= 0
+
+    @patch("site_generator.services.generator.PandaScoreClient")
+    def test_normalizes_output_permissions_after_generation(
+        self, MockClient: MagicMock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("PANDASCORE_TOKEN", "tok")
+
+        project_dir = tmp_path / "project"
+        project_dir.mkdir()
+
+        src_root = Path(__file__).resolve().parent.parent
+        shutil.copytree(src_root / "templates" / "site", project_dir / "templates" / "site")
+        static_src = src_root / "static" / "site"
+        if static_src.exists():
+            shutil.copytree(static_src, project_dir / "static" / "site")
+
+        config = Config(
+            pandascore_token="tok",
+            site_url="https://test.local",
+            site_name="Test",
+            site_timezone="UTC",
+            output_dir=project_dir / "generated_site",
+            base_dir=project_dir,
+        )
+
+        instance = MockClient.return_value.__enter__.return_value
+        instance.fetch_matches_for_day.return_value = [make_raw_match()]
+
+        with patch("site_generator.services.generator._ensure_public_permissions") as ensure_permissions:
+            generate_site(config)
+
+        ensure_permissions.assert_called_once_with(config.output_dir)
 
     @patch("site_generator.services.generator.PandaScoreClient")
     def test_empty_day(
@@ -139,4 +175,4 @@ class TestGenerateSiteIntegration:
 
         assert result["today"] == 0
         html = (config.output_dir / "today" / "index.html").read_text(encoding="utf-8")
-        assert "No matches scheduled" in html
+        assert "На этот день матчей пока нет." in html

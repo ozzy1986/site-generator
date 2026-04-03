@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 from site_generator.models import (
+    DaySchedule,
     MatchCard,
     MatchResult,
     TeamInfo,
@@ -64,8 +65,13 @@ class TestMatchCardProperties:
         assert self._card(match_type="red_bull_home_ground").format_display == "Red Bull Home Ground"
 
     def test_status_display(self) -> None:
-        assert self._card(status="running").status_display == "Live"
-        assert self._card(status="canceled").status_display == "Canceled"
+        assert self._card(status="running").status_display == "Идёт"
+        assert self._card(status="canceled").status_display == "Отменён"
+
+
+class TestDaySchedule:
+    def test_display_label(self) -> None:
+        assert DaySchedule(label="today", date_str="2026-04-03", display_date="3 апреля 2026").display_label == "Сегодня"
 
 
 class TestNormalizeMatch:
@@ -123,5 +129,5 @@ class TestNormalizeMatch:
     def test_null_nested_objects(self) -> None:
         raw = make_raw_match(tournament=None, league=None, serie=None, videogame=None)
         card = normalize_match(raw)
-        assert card.tournament.name == "Unknown"
-        assert card.videogame.name == "Unknown"
+        assert card.tournament.name == "Неизвестно"
+        assert card.videogame.name == "Неизвестно"

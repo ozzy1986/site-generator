@@ -14,7 +14,7 @@ class TestConfigFromEnv:
 
         assert cfg.pandascore_token == "tok-abc"
         assert cfg.site_url == "https://site-generator.ozzy1986.com"
-        assert cfg.site_name == "Esports Matches Schedule"
+        assert cfg.site_name == "Киберспортивные матчи"
         assert cfg.site_timezone == "UTC"
         assert cfg.output_dir == tmp_path / "generated_site"
         assert cfg.base_dir == tmp_path

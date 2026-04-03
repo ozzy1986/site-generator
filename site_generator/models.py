@@ -4,6 +4,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+_DAY_LABELS_RU = {
+    "yesterday": "Вчера",
+    "today": "Сегодня",
+    "tomorrow": "Завтра",
+}
+
 
 @dataclass(frozen=True)
 class TeamInfo:
@@ -100,11 +106,11 @@ class MatchCard:
     @property
     def status_display(self) -> str:
         return {
-            "not_started": "Upcoming",
-            "running": "Live",
-            "finished": "Finished",
-            "canceled": "Canceled",
-            "postponed": "Postponed",
+            "not_started": "Скоро",
+            "running": "Идёт",
+            "finished": "Завершён",
+            "canceled": "Отменён",
+            "postponed": "Перенесён",
         }.get(self.status, self.status.replace("_", " ").title())
 
 
@@ -114,6 +120,10 @@ class DaySchedule:
     date_str: str
     display_date: str
     matches: tuple[MatchCard, ...] = ()
+
+    @property
+    def display_label(self) -> str:
+        return _DAY_LABELS_RU.get(self.label, self.label.replace("_", " ").title())
 
 
 # ---------------------------------------------------------------------------
@@ -139,15 +149,15 @@ def normalize_match(raw: dict[str, Any]) -> MatchCard:
 
     tournament = TournamentInfo(
         id=tournament_raw.get("id", 0),
-        name=tournament_raw.get("name", "Unknown"),
-        league_name=league_raw.get("name", "Unknown"),
+        name=tournament_raw.get("name", "Неизвестно"),
+        league_name=league_raw.get("name", "Неизвестно"),
         league_image_url=league_raw.get("image_url"),
         serie_full_name=serie_raw.get("full_name"),
     )
 
     videogame = VideogameInfo(
         id=videogame_raw.get("id", 0),
-        name=videogame_raw.get("name", "Unknown"),
+        name=videogame_raw.get("name", "Неизвестно"),
         slug=videogame_raw.get("slug", ""),
     )
 
