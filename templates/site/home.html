@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <h1>Esports Match Schedule</h1>
+    <p class="hero-sub">Yesterday's results, today's action, tomorrow's matchups.</p>
+</section>
+
+<div class="day-grid">
+    {% for key, sched in schedules.items() %}
+    <a href="/{{ sched.label }}/" class="day-card day-card--{{ sched.label }}">
+        <h2 class="day-card__title">{{ sched.label|capitalize }}</h2>
+        <time class="day-card__date" datetime="{{ sched.date_str }}">{{ sched.display_date }}</time>
+        <p class="day-card__count">
+            {{ sched.matches|length }} match{{ 'es' if sched.matches|length != 1 else '' }}
+        </p>
+        {% if sched.matches %}
+        <ul class="day-card__preview">
+            {% for m in sched.matches[:3] %}
+            <li>{{ m.name | truncate(40) }}</li>
+            {% endfor %}
+            {% if sched.matches|length > 3 %}
+            <li class="more">+{{ sched.matches|length - 3 }} more</li>
+            {% endif %}
+        </ul>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Generator — Admin</title>
+    <link rel="icon" href="{{ url_for('static', filename='site/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/styles.css') }}">
+</head>
+<body>
+    <div class="admin-shell">
+        <header class="admin-header">
+            <img src="{{ url_for('static', filename='site/logo.svg') }}" alt="Logo" class="admin-logo" width="64" height="64">
+            <h1>Esports Site Generator</h1>
+            <p class="admin-sub">Fetch PandaScore data and build a static schedule site.</p>
+        </header>
+
+        <main class="admin-main">
+            <button id="btn-generate" class="btn btn-primary" type="button">Generate Site</button>
+
+            <div id="status" class="status-area" hidden>
+                <div id="status-spinner" class="spinner" hidden></div>
+                <div id="status-message"></div>
+            </div>
+
+            <button id="btn-open" class="btn btn-secondary" type="button" hidden>Open Output Folder</button>
+        </main>
+
+        <footer class="admin-footer">
+            <p>Data: <a href="https://pandascore.co" target="_blank" rel="noopener noreferrer">PandaScore API</a></p>
+        </footer>
+    </div>
+
+    <script>
+    (function () {
+        var btnGen = document.getElementById('btn-generate');
+        var btnOpen = document.getElementById('btn-open');
+        var statusArea = document.getElementById('status');
+        var spinner = document.getElementById('status-spinner');
+        var msg = document.getElementById('status-message');
+
+        function setStatus(html, isError) {
+            statusArea.hidden = false;
+            spinner.hidden = true;
+            msg.innerHTML = html;
+            msg.className = isError ? 'msg msg--error' : 'msg msg--ok';
+        }
+
+        btnGen.addEventListener('click', function () {
+            btnGen.disabled = true;
+            btnOpen.hidden = true;
+            statusArea.hidden = false;
+            spinner.hidden = false;
+            msg.innerHTML = 'Generating&hellip;';
+            msg.className = 'msg msg--busy';
+
+            fetch('/generate', { method: 'POST' })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (res) {
+                    if (res.data.success) {
+                        var c = res.data.counts || {};
+                        setStatus(
+                            res.data.message +
+                            '<br><small>Yesterday: ' + (c.yesterday || 0) +
+                            ' &middot; Today: ' + (c.today || 0) +
+                            ' &middot; Tomorrow: ' + (c.tomorrow || 0) + '</small>',
+                            false
+                        );
+                        btnOpen.hidden = false;
+                    } else {
+                        setStatus(res.data.message, true);
+                    }
+                })
+                .catch(function (err) { setStatus('Network error: ' + err, true); })
+                .finally(function () { btnGen.disabled = false; });
+        });
+
+        btnOpen.addEventListener('click', function () {
+            fetch('/open-output', { method: 'POST' });
+        });
+    })();
+    </script>
+</body>
+</html>

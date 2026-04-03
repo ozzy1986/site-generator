@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <filter id="glitch">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <linearGradient id="chaos" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff006e"/>
+      <stop offset="33%" stop-color="#8338ec"/>
+      <stop offset="66%" stop-color="#3a86ff"/>
+      <stop offset="100%" stop-color="#06d6a0"/>
+    </linearGradient>
+    <radialGradient id="eye-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffbe0b"/>
+      <stop offset="100%" stop-color="#fb5607"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Chaotic background blob -->
+  <path d="M28 10 Q-5 40 20 70 Q0 100 40 115 Q64 130 90 110 Q125 95 115 60 Q130 20 95 8 Q64-10 28 10Z"
+        fill="url(#chaos)" filter="url(#glitch)" opacity="0.92"/>
+
+  <!-- Deranged controller body -->
+  <g transform="translate(22,28) rotate(-8, 42, 36)">
+    <rect x="12" y="18" width="60" height="36" rx="18" fill="#1a1a2e" stroke="#ff006e" stroke-width="2"/>
+    <!-- D-pad (melting) -->
+    <path d="M28 30 v-8 h6 v8 h8 v6 h-8 v8 h-6 v-8 h-8 v-6Z" fill="#8338ec" transform="skewX(-8)"/>
+    <!-- Buttons (misaligned on purpose) -->
+    <circle cx="58" cy="28" r="4" fill="#ff006e"/>
+    <circle cx="66" cy="34" r="4" fill="#3a86ff"/>
+    <circle cx="56" cy="38" r="3.5" fill="#06d6a0"/>
+    <circle cx="68" cy="26" r="3" fill="#ffbe0b"/>
+  </g>
+
+  <!-- The all-seeing eye -->
+  <g transform="translate(52, 18)">
+    <ellipse cx="12" cy="10" rx="14" ry="10" fill="url(#eye-glow)" stroke="#1a1a2e" stroke-width="2"/>
+    <circle cx="12" cy="10" r="5" fill="#1a1a2e"/>
+    <circle cx="13" cy="8" r="2" fill="#fff"/>
+  </g>
+
+  <!-- Tentacles from behind the controller -->
+  <g stroke-linecap="round" fill="none" stroke-width="3.5" opacity="0.85">
+    <path d="M15 75 Q0 90 10 105 Q18 118 8 125" stroke="#8338ec"/>
+    <path d="M35 80 Q25 100 35 115 Q40 125 30 130" stroke="#ff006e"/>
+    <path d="M90 75 Q105 88 100 105 Q95 120 108 128" stroke="#3a86ff"/>
+    <path d="M110 65 Q125 80 118 100 Q112 115 122 125" stroke="#06d6a0"/>
+  </g>
+
+  <!-- Tiny calendar icon (schedule reference, placed chaotically) -->
+  <g transform="translate(82, 8) rotate(15)">
+    <rect x="0" y="0" width="22" height="20" rx="3" fill="#fff" stroke="#1a1a2e" stroke-width="1.5"/>
+    <rect x="0" y="0" width="22" height="7" rx="3" fill="#ff006e"/>
+    <line x1="5" y1="12" x2="17" y2="12" stroke="#1a1a2e" stroke-width="1.2"/>
+    <line x1="5" y1="16" x2="13" y2="16" stroke="#1a1a2e" stroke-width="1.2"/>
+  </g>
+
+  <!-- Electric sparks -->
+  <g stroke="#ffbe0b" stroke-width="2" fill="none" opacity="0.9">
+    <polyline points="5,20 12,15 8,25 16,18"/>
+    <polyline points="115,42 108,38 113,48 106,43"/>
+    <polyline points="62,95 68,88 64,98 72,92"/>
+  </g>
+</svg>

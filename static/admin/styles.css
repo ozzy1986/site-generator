@@ -1,0 +1,172 @@
+/* ===================================================================
+   Admin UI — professional, minimal, functional
+   =================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #f8f9fa;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-muted: #6c757d;
+    --primary: #4361ee;
+    --primary-hover: #3a56d4;
+    --danger: #e63946;
+    --success: #2a9d8f;
+    --border: #dee2e6;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.admin-shell {
+    width: 100%;
+    max-width: 480px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+}
+
+.admin-logo {
+    margin-bottom: 1rem;
+}
+
+.admin-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.admin-sub {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 2rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.btn:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--border);
+    margin-top: 1rem;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+}
+
+/* Status area */
+.status-area {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    background: var(--bg);
+    text-align: left;
+    font-size: 0.875rem;
+    word-break: break-word;
+}
+
+.msg--ok {
+    color: var(--success);
+}
+
+.msg--error {
+    color: var(--danger);
+}
+
+.msg--busy {
+    color: var(--text-muted);
+}
+
+/* Spinner */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 0.75rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.admin-footer {
+    margin-top: 2.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.admin-footer a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.admin-footer a:hover {
+    text-decoration: underline;
+}

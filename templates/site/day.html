@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="day-header">
+    <h1>{{ schedule.label|capitalize }}: {{ schedule.display_date }}</h1>
+    <p class="match-count">{{ schedule.matches|length }} match{{ 'es' if schedule.matches|length != 1 else '' }}</p>
+</section>
+
+{% if schedule.matches %}
+<div class="matches-grid">
+    {% for match in schedule.matches %}
+    <article class="match-card match-card--{{ match.status }}" data-id="{{ match.id }}">
+        <div class="match-card__header">
+            {% if match.tournament.league_image_url %}
+            <img src="{{ match.tournament.league_image_url }}" alt="" class="match-card__league-logo" width="20" height="20" loading="lazy">
+            {% endif %}
+            <span class="match-card__league">{{ match.tournament.league_name }}</span>
+            <span class="match-card__separator">&middot;</span>
+            <span class="match-card__tournament">{{ match.tournament.name }}</span>
+        </div>
+
+        <div class="match-card__body">
+            {% if match.teams|length >= 2 %}
+            <div class="match-card__team match-card__team--left">
+                {% if match.teams[0].thumb_image_url %}
+                <img src="{{ match.teams[0].thumb_image_url }}" alt="{{ match.teams[0].name }}" class="team-logo" width="36" height="36" loading="lazy">
+                {% else %}
+                <span class="team-logo team-logo--placeholder"></span>
+                {% endif %}
+                <span class="team-name{% if match.winner_id == match.teams[0].id %} team-name--winner{% endif %}">{{ match.teams[0].name }}</span>
+            </div>
+
+            <div class="match-card__score">
+                {% if match.score_display %}
+                <span class="score-text">{{ match.score_display }}</span>
+                {% else %}
+                <span class="score-vs">vs</span>
+                {% endif %}
+                <span class="match-format">{{ match.format_display }}</span>
+            </div>
+
+            <div class="match-card__team match-card__team--right">
+                <span class="team-name{% if match.winner_id == match.teams[1].id %} team-name--winner{% endif %}">{{ match.teams[1].name }}</span>
+                {% if match.teams[1].thumb_image_url %}
+                <img src="{{ match.teams[1].thumb_image_url }}" alt="{{ match.teams[1].name }}" class="team-logo" width="36" height="36" loading="lazy">
+                {% else %}
+                <span class="team-logo team-logo--placeholder"></span>
+                {% endif %}
+            </div>
+            {% elif match.teams|length == 1 %}
+            <div class="match-card__team">
+                <span class="team-name">{{ match.teams[0].name }}</span>
+                <span class="score-vs">vs TBD</span>
+            </div>
+            {% else %}
+            <div class="match-card__tbd">{{ match.name }}</div>
+            {% endif %}
+        </div>
+
+        <div class="match-card__footer">
+            <span class="match-card__game">{{ match.videogame.name }}</span>
+            {% if match.begin_at %}
+            <time class="match-card__time" datetime="{{ match.begin_at.isoformat() }}">
+                {{ match.begin_at.strftime('%H:%M') }} UTC
+            </time>
+            {% endif %}
+            <span class="match-card__status match-card__status--{{ match.status }}">{{ match.status_display }}</span>
+            {% if match.stream_url and match.is_live %}
+            <a href="{{ match.stream_url }}" class="match-card__stream" target="_blank" rel="noopener noreferrer">Watch</a>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No matches scheduled for this day.</p>
+</div>
+{% endif %}
+{% endblock %}
