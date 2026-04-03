@@ -29,18 +29,14 @@
                     <a class="btn btn-secondary" href="/" target="_blank" rel="noopener noreferrer">Открыть публичный сайт</a>
                 </div>
 
+                <div class="action-row action-row--secondary">
+                    <a id="btn-download" class="btn btn-ghost" href="{{ url_for('download_site') }}">Скачать сгенерированный сайт</a>
+                </div>
+
                 <div id="status" class="status-area" hidden>
                     <div id="status-spinner" class="spinner" hidden></div>
                     <div id="status-message"></div>
                 </div>
-
-                <button
-                    id="btn-open"
-                    class="btn btn-ghost"
-                    type="button"
-                    hidden
-                    data-can-open-output="{{ 'true' if can_open_output else 'false' }}"
-                >Открыть каталог сборки</button>
             </section>
 
             <section class="info-grid" aria-label="Информация о генераторе">
@@ -76,11 +72,9 @@
     <script>
     (function () {
         var btnGen = document.getElementById('btn-generate');
-        var btnOpen = document.getElementById('btn-open');
         var statusArea = document.getElementById('status');
         var spinner = document.getElementById('status-spinner');
         var msg = document.getElementById('status-message');
-        var canOpenOutput = btnOpen.dataset.canOpenOutput === 'true';
 
         function setStatus(html, isError) {
             statusArea.hidden = false;
@@ -91,7 +85,6 @@
 
         btnGen.addEventListener('click', function () {
             btnGen.disabled = true;
-            btnOpen.hidden = true;
             statusArea.hidden = false;
             spinner.hidden = false;
             msg.innerHTML = 'Собираю сайт&hellip;';
@@ -102,36 +95,19 @@
                 .then(function (res) {
                     if (res.data.success) {
                         var c = res.data.counts || {};
-                        var details = '<br><small>Вчера: ' + (c.yesterday || 0) +
-                            ' &middot; Сегодня: ' + (c.today || 0) +
-                            ' &middot; Завтра: ' + (c.tomorrow || 0) + '</small>';
-
-                        if (!canOpenOutput) {
-                            details += '<br><small>Каталог сборки можно открыть только локально в графической среде.</small>';
-                        }
-
                         setStatus(
-                            res.data.message + details,
+                            res.data.message +
+                            '<br><small>Вчера: ' + (c.yesterday || 0) +
+                            ' &middot; Сегодня: ' + (c.today || 0) +
+                            ' &middot; Завтра: ' + (c.tomorrow || 0) + '</small>',
                             false
                         );
-                        btnOpen.hidden = !canOpenOutput;
                     } else {
                         setStatus(res.data.message, true);
                     }
                 })
                 .catch(function (err) { setStatus('Ошибка сети: ' + err, true); })
                 .finally(function () { btnGen.disabled = false; });
-        });
-
-        btnOpen.addEventListener('click', function () {
-            fetch('/open-output', { method: 'POST' })
-                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-                .then(function (res) {
-                    if (!res.data.success) {
-                        setStatus(res.data.message, true);
-                    }
-                })
-                .catch(function (err) { setStatus('Не удалось открыть каталог: ' + err, true); });
         });
     })();
     </script>

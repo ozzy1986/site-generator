@@ -128,6 +128,10 @@ a:hover {
     margin-top: 28px;
 }
 
+.action-row--secondary {
+    margin-top: 12px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;

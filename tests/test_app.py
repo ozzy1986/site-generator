@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import io
+import zipfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from app import app
+from site_generator.config import Config
 
 
 @pytest.fixture()
@@ -19,6 +23,7 @@ class TestAdminIndex:
         resp = client.get("/")
         assert resp.status_code == 200
         assert "Собрать сайт".encode("utf-8") in resp.data
+        assert "Скачать сгенерированный сайт".encode("utf-8") in resp.data
 
     def test_admin_alias(self, client) -> None:
         resp = client.get("/admin")
@@ -53,21 +58,46 @@ class TestGenerateEndpoint:
         assert resp.status_code == 500
 
 
-class TestOpenOutput:
+class TestDownloadSite:
     @patch("app.Config.from_env")
-    def test_no_dir(self, mock_config, client, tmp_path) -> None:
-        mock_config.return_value.output_dir = tmp_path / "nonexistent"
-        resp = client.post("/open-output")
+    def test_returns_zip_with_files(self, mock_config, client, tmp_path: Path) -> None:
+        out = tmp_path / "generated_site"
+        out.mkdir()
+        (out / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+        mock_config.return_value = Config(
+            pandascore_token="tok",
+            site_url="https://example.com",
+            site_name="Test",
+            site_timezone="UTC",
+            output_dir=out,
+            base_dir=tmp_path,
+        )
+
+        resp = client.get("/download-site")
+
+        assert resp.status_code == 200
+        assert resp.mimetype == "application/zip"
+        zf = zipfile.ZipFile(io.BytesIO(resp.data))
+        names = zf.namelist()
+        assert "index.html" in names
+
+    @patch("app.Config.from_env")
+    def test_missing_output_dir(self, mock_config, client, tmp_path: Path) -> None:
+        missing = tmp_path / "nope"
+        mock_config.return_value = Config(
+            pandascore_token="tok",
+            site_url="https://example.com",
+            site_name="Test",
+            site_timezone="UTC",
+            output_dir=missing,
+            base_dir=tmp_path,
+        )
+
+        resp = client.get("/download-site")
+
         assert resp.status_code == 404
 
-    @patch("app._can_open_output_directory", return_value=False)
-    @patch("app.Config.from_env")
-    def test_unsupported_environment(self, mock_config, mock_can_open, client, tmp_path) -> None:
-        output_dir = tmp_path / "generated_site"
-        output_dir.mkdir()
-        mock_config.return_value.output_dir = output_dir
-
-        resp = client.post("/open-output")
-
-        assert resp.status_code == 501
-        assert resp.get_json()["success"] is False
+    @patch("app.Config.from_env", side_effect=ValueError("Не задана переменная окружения PANDASCORE_TOKEN"))
+    def test_missing_token(self, mock_config, client) -> None:
+        resp = client.get("/download-site")
+        assert resp.status_code == 400
