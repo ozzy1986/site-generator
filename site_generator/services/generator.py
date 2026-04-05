@@ -33,10 +33,13 @@ _MONTH_NAMES_RU = {
     12: "декабря",
 }
 
+# Temporary manual verification: pin "today" to 2026-04-04.
+_FORCED_TODAY = date(2026, 4, 4)
+
 
 def compute_day_dates() -> tuple[date, date, date]:
     """Return *(yesterday, today, tomorrow)* in UTC."""
-    today = datetime.now(timezone.utc).date()
+    today = _FORCED_TODAY
     return today - timedelta(days=1), today, today + timedelta(days=1)
 
 

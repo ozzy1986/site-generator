@@ -20,14 +20,12 @@ from tests.conftest import make_raw_match
 
 
 class TestComputeDayDates:
-    @patch("site_generator.services.generator.datetime")
-    def test_returns_three_consecutive_dates(self, mock_dt: MagicMock) -> None:
-        mock_dt.now.return_value = datetime(2026, 4, 3, 12, 0, tzinfo=timezone.utc)
-        mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+    def test_returns_three_consecutive_dates(self) -> None:
+        # Matches temporary _FORCED_TODAY in generator.py (manual verification build).
         yesterday, today, tomorrow = compute_day_dates()
-        assert yesterday == date(2026, 4, 2)
-        assert today == date(2026, 4, 3)
-        assert tomorrow == date(2026, 4, 4)
+        assert yesterday == date(2026, 4, 3)
+        assert today == date(2026, 4, 4)
+        assert tomorrow == date(2026, 4, 5)
 
 
 class TestFormatDisplayDate:
