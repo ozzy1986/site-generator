@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from typing import Any
 
 import requests
@@ -34,32 +34,43 @@ class PandaScoreClient:
     # Public API
     # ------------------------------------------------------------------
 
-    def fetch_matches_for_day(self, target_date: date) -> list[dict[str, Any]]:
-        """Return all matches whose *begin_at* falls on *target_date* (UTC)."""
-        all_matches: list[dict[str, Any]] = []
-        page = 1
+    def fetch_matches_for_day(
+        self,
+        target_date: date,
+        target_tz: tzinfo = timezone.utc,
+    ) -> list[dict[str, Any]]:
+        """Return matches whose *begin_at* falls on *target_date* in *target_tz*."""
+        all_matches: dict[int | str, dict[str, Any]] = {}
 
-        while True:
-            params: dict[str, Any] = {
-                "filter[begin_at]": target_date.isoformat(),
-                "sort": "begin_at",
-                "page[size]": PAGE_SIZE,
-                "page[number]": page,
-            }
-            resp = self._request("/matches", params)
-            batch: list[dict[str, Any]] = resp.json()
+        for query_date in self._query_dates_for_local_day(target_date, target_tz):
+            fetched_for_query_date = 0
+            page = 1
 
-            if not batch:
-                break
+            while True:
+                params: dict[str, Any] = {
+                    "filter[begin_at]": query_date.isoformat(),
+                    "sort": "begin_at",
+                    "page[size]": PAGE_SIZE,
+                    "page[number]": page,
+                }
+                resp = self._request("/matches", params)
+                batch: list[dict[str, Any]] = resp.json()
 
-            all_matches.extend(batch)
+                if not batch:
+                    break
 
-            total = int(resp.headers.get("X-Total", 0))
-            if len(all_matches) >= total:
-                break
-            page += 1
+                for match in batch:
+                    match_id = match.get("id")
+                    key = match_id if match_id is not None else f"{query_date.isoformat()}-{len(all_matches)}"
+                    all_matches[key] = match
 
-        return [m for m in all_matches if self._match_on_date(m, target_date)]
+                fetched_for_query_date += len(batch)
+                total = int(resp.headers.get("X-Total", 0))
+                if fetched_for_query_date >= total:
+                    break
+                page += 1
+
+        return [m for m in all_matches.values() if self._match_on_date(m, target_date, target_tz)]
 
     def close(self) -> None:
         self._session.close()
@@ -115,13 +126,34 @@ class PandaScoreClient:
         return resp
 
     @staticmethod
-    def _match_on_date(match: dict[str, Any], target_date: date) -> bool:
-        """Safety net: confirm *begin_at* really falls on *target_date* UTC."""
+    def _match_on_date(
+        match: dict[str, Any],
+        target_date: date,
+        target_tz: tzinfo = timezone.utc,
+    ) -> bool:
+        """Safety net: confirm *begin_at* really falls on *target_date* in *target_tz*."""
         begin_at = match.get("begin_at")
         if not begin_at:
             return False
         try:
             dt = datetime.fromisoformat(begin_at.replace("Z", "+00:00"))
-            return dt.astimezone(timezone.utc).date() == target_date
+            return dt.astimezone(target_tz).date() == target_date
         except (ValueError, AttributeError):
             return False
+
+    @staticmethod
+    def _query_dates_for_local_day(target_date: date, target_tz: tzinfo) -> tuple[date, ...]:
+        """Return the UTC calendar dates that overlap the local day."""
+        start_local = datetime.combine(target_date, time.min, tzinfo=target_tz)
+        end_local = start_local + timedelta(days=1) - timedelta(microseconds=1)
+
+        start_utc = start_local.astimezone(timezone.utc).date()
+        end_utc = end_local.astimezone(timezone.utc).date()
+
+        query_dates: list[date] = []
+        current = start_utc
+        while current <= end_utc:
+            query_dates.append(current)
+            current += timedelta(days=1)
+
+        return tuple(query_dates)

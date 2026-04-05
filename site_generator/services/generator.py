@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import logging
 import os
 import shutil
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -33,13 +35,24 @@ _MONTH_NAMES_RU = {
     12: "декабря",
 }
 
-# Temporary manual verification: pin "today" to 2026-04-04.
-_FORCED_TODAY = date(2026, 4, 4)
+_TIMEZONE_LABELS = {
+    "Europe/Moscow": "МСК",
+}
 
 
-def compute_day_dates() -> tuple[date, date, date]:
-    """Return *(yesterday, today, tomorrow)* in UTC."""
-    today = _FORCED_TODAY
+def compute_day_dates(
+    site_tz: tzinfo = timezone.utc,
+    now: datetime | None = None,
+) -> tuple[date, date, date]:
+    """Return *(yesterday, today, tomorrow)* in the configured timezone."""
+    if now is None:
+        current = datetime.now(site_tz)
+    elif now.tzinfo is None:
+        current = now.replace(tzinfo=site_tz)
+    else:
+        current = now.astimezone(site_tz)
+
+    today = current.date()
     return today - timedelta(days=1), today, today + timedelta(days=1)
 
 
@@ -66,6 +79,22 @@ def normalize_matches(raw: list[dict[str, Any]]) -> list[MatchCard]:
     return [normalize_match(m) for m in raw]
 
 
+def localize_matches(matches: list[MatchCard], site_tz: tzinfo) -> list[MatchCard]:
+    """Convert match datetimes from UTC to the configured site timezone."""
+    localized: list[MatchCard] = []
+    for match in matches:
+        localized.append(replace(
+            match,
+            begin_at=match.begin_at.astimezone(site_tz) if match.begin_at else None,
+            end_at=match.end_at.astimezone(site_tz) if match.end_at else None,
+        ))
+    return localized
+
+
+def timezone_label(site_timezone: str) -> str:
+    return _TIMEZONE_LABELS.get(site_timezone, site_timezone)
+
+
 # ------------------------------------------------------------------
 # Orchestrator
 # ------------------------------------------------------------------
@@ -75,21 +104,28 @@ def generate_site(config: Config) -> dict[str, Any]:
 
     Returns a summary dict with per-day match counts.
     """
-    yesterday_date, today_date, tomorrow_date = compute_day_dates()
+    site_tz = ZoneInfo(config.site_timezone)
+    yesterday_date, today_date, tomorrow_date = compute_day_dates(site_tz)
     logger.info(
-        "Fetching PandaScore matches for %s / %s / %s",
-        yesterday_date, today_date, tomorrow_date,
+        "Fetching PandaScore matches for %s / %s / %s in %s",
+        yesterday_date, today_date, tomorrow_date, config.site_timezone,
     )
 
     with PandaScoreClient(config.pandascore_token) as client:
-        raw_yesterday = client.fetch_matches_for_day(yesterday_date)
-        raw_today = client.fetch_matches_for_day(today_date)
-        raw_tomorrow = client.fetch_matches_for_day(tomorrow_date)
+        raw_yesterday = client.fetch_matches_for_day(yesterday_date, site_tz)
+        raw_today = client.fetch_matches_for_day(today_date, site_tz)
+        raw_tomorrow = client.fetch_matches_for_day(tomorrow_date, site_tz)
 
     schedules = {
-        "yesterday": build_day_schedule("yesterday", yesterday_date, normalize_matches(raw_yesterday)),
-        "today": build_day_schedule("today", today_date, normalize_matches(raw_today)),
-        "tomorrow": build_day_schedule("tomorrow", tomorrow_date, normalize_matches(raw_tomorrow)),
+        "yesterday": build_day_schedule(
+            "yesterday", yesterday_date, localize_matches(normalize_matches(raw_yesterday), site_tz),
+        ),
+        "today": build_day_schedule(
+            "today", today_date, localize_matches(normalize_matches(raw_today), site_tz),
+        ),
+        "tomorrow": build_day_schedule(
+            "tomorrow", tomorrow_date, localize_matches(normalize_matches(raw_tomorrow), site_tz),
+        ),
     }
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -126,7 +162,11 @@ def _render_site(
 
     _copy_assets(config.base_dir, output)
 
-    ctx_common = {"site_name": config.site_name, "schedules": schedules}
+    ctx_common = {
+        "site_name": config.site_name,
+        "schedules": schedules,
+        "site_timezone_label": timezone_label(config.site_timezone),
+    }
 
     _write_home(env, config, schedules, output, ctx_common)
 

@@ -5,7 +5,7 @@
     <div>
         <p class="day-kicker">{{ schedule.display_label }}</p>
         <h1>{{ schedule.display_date }}</h1>
-        <p class="match-count">Матчей: {{ schedule.matches|length }} · Время указано в UTC</p>
+        <p class="match-count">Матчей: {{ schedule.matches|length }} · Часовой пояс: {{ site_timezone_label }}</p>
     </div>
     <a href="/" class="back-link">На главную</a>
 </section>
@@ -65,7 +65,7 @@
             <span class="match-card__game">{{ match.videogame.name }}</span>
             {% if match.begin_at %}
             <time class="match-card__time" datetime="{{ match.begin_at.isoformat() }}">
-                {{ match.begin_at.strftime('%H:%M') }} UTC
+                {{ match.begin_at.strftime('%H:%M') }} {{ site_timezone_label }}
             </time>
             {% endif %}
             <span class="match-card__status match-card__status--{{ match.status }}">{{ match.status_display }}</span>

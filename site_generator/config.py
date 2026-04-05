@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dotenv import load_dotenv
 
@@ -25,11 +26,17 @@ class Config:
         if not token:
             raise ValueError("Не задана переменная окружения PANDASCORE_TOKEN")
 
+        site_timezone = os.environ.get("SITE_TIMEZONE", "Europe/Moscow")
+        try:
+            ZoneInfo(site_timezone)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError(f"Неизвестная таймзона SITE_TIMEZONE: {site_timezone}") from exc
+
         return cls(
             pandascore_token=token,
             site_url=os.environ.get("SITE_URL", "https://site-generator.ozzy1986.com").rstrip("/"),
             site_name=os.environ.get("SITE_NAME", "Киберспортивные матчи"),
-            site_timezone=os.environ.get("SITE_TIMEZONE", "UTC"),
+            site_timezone=site_timezone,
             output_dir=base / os.environ.get("OUTPUT_DIR", "generated_site"),
             base_dir=base,
         )

@@ -15,7 +15,7 @@ class TestConfigFromEnv:
         assert cfg.pandascore_token == "tok-abc"
         assert cfg.site_url == "https://site-generator.ozzy1986.com"
         assert cfg.site_name == "Киберспортивные матчи"
-        assert cfg.site_timezone == "UTC"
+        assert cfg.site_timezone == "Europe/Moscow"
         assert cfg.output_dir == tmp_path / "generated_site"
         assert cfg.base_dir == tmp_path
 
@@ -36,6 +36,12 @@ class TestConfigFromEnv:
     def test_missing_token_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("PANDASCORE_TOKEN", raising=False)
         with pytest.raises(ValueError, match="PANDASCORE_TOKEN"):
+            Config.from_env(base_dir=tmp_path)
+
+    def test_invalid_timezone_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("PANDASCORE_TOKEN", "tok")
+        monkeypatch.setenv("SITE_TIMEZONE", "Mars/Olympus")
+        with pytest.raises(ValueError, match="SITE_TIMEZONE"):
             Config.from_env(base_dir=tmp_path)
 
     def test_frozen(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

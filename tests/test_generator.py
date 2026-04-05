@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -21,11 +22,14 @@ from tests.conftest import make_raw_match
 
 class TestComputeDayDates:
     def test_returns_three_consecutive_dates(self) -> None:
-        # Matches temporary _FORCED_TODAY in generator.py (manual verification build).
-        yesterday, today, tomorrow = compute_day_dates()
-        assert yesterday == date(2026, 4, 3)
-        assert today == date(2026, 4, 4)
-        assert tomorrow == date(2026, 4, 5)
+        msk = ZoneInfo("Europe/Moscow")
+        yesterday, today, tomorrow = compute_day_dates(
+            msk,
+            now=datetime(2026, 4, 4, 21, 30, tzinfo=timezone.utc),
+        )
+        assert yesterday == date(2026, 4, 4)
+        assert today == date(2026, 4, 5)
+        assert tomorrow == date(2026, 4, 6)
 
 
 class TestFormatDisplayDate:
@@ -90,7 +94,7 @@ class TestGenerateSiteIntegration:
             pandascore_token="tok",
             site_url="https://test.local",
             site_name="Test",
-            site_timezone="UTC",
+            site_timezone="Europe/Moscow",
             output_dir=project_dir / "generated_site",
             base_dir=project_dir,
         )
@@ -105,9 +109,12 @@ class TestGenerateSiteIntegration:
         assert (config.output_dir / "today" / "index.html").exists()
         assert (config.output_dir / "tomorrow" / "index.html").exists()
         home_html = (config.output_dir / "index.html").read_text(encoding="utf-8")
+        today_html = (config.output_dir / "today" / "index.html").read_text(encoding="utf-8")
         assert "Киберспорт без лишнего шума" not in home_html
         assert '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' in home_html
         assert "Матчи по дням" in home_html
+        assert "Часовой пояс: МСК" in today_html
+        assert "17:00 МСК" in today_html
         assert result["today"] >= 0
 
     @patch("site_generator.services.generator.PandaScoreClient")
@@ -129,7 +136,7 @@ class TestGenerateSiteIntegration:
             pandascore_token="tok",
             site_url="https://test.local",
             site_name="Test",
-            site_timezone="UTC",
+            site_timezone="Europe/Moscow",
             output_dir=project_dir / "generated_site",
             base_dir=project_dir,
         )
@@ -161,7 +168,7 @@ class TestGenerateSiteIntegration:
             pandascore_token="tok",
             site_url="https://test.local",
             site_name="Test",
-            site_timezone="UTC",
+            site_timezone="Europe/Moscow",
             output_dir=project_dir / "generated_site",
             base_dir=project_dir,
         )
