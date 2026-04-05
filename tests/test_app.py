@@ -24,6 +24,7 @@ class TestAdminIndex:
         assert resp.status_code == 200
         assert "Собрать сайт".encode("utf-8") in resp.data
         assert "Скачать сгенерированный сайт".encode("utf-8") in resp.data
+        assert "Журнал сервиса".encode("utf-8") in resp.data
 
     def test_admin_alias(self, client) -> None:
         resp = client.get("/admin")
@@ -101,3 +102,23 @@ class TestDownloadSite:
     def test_missing_token(self, mock_config, client) -> None:
         resp = client.get("/download-site")
         assert resp.status_code == 400
+
+
+class TestServiceLog:
+    @patch("app._read_service_journal_tail")
+    def test_returns_lines(self, mock_tail, client) -> None:
+        mock_tail.return_value = (True, "", ["alpha", "beta"])
+        resp = client.get("/service-log")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["success"] is True
+        assert data["lines"] == ["alpha", "beta"]
+
+    @patch("app._read_service_journal_tail")
+    def test_returns_message_when_unavailable(self, mock_tail, client) -> None:
+        mock_tail.return_value = (False, "Журнал недоступен.", [])
+        resp = client.get("/service-log")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["success"] is False
+        assert data["message"] == "Журнал недоступен."
