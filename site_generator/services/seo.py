@@ -88,15 +88,17 @@ def build_day_seo(
 
 def build_home_seo(site_url: str, site_name: str) -> PageSeo:
     """Build SEO metadata for the landing/index page."""
+    page_title = f"{site_name} — вчера, сегодня, завтра"
     return PageSeo(
-        title=f"{site_name} — вчера, сегодня, завтра",
+        title=page_title,
         description=(
             "Расписание, результаты и актуальные статусы киберспортивных матчей "
             "на вчера, сегодня и завтра. Обновляется ежедневно."
         ),
         keywords="киберспорт, матчи, расписание, результаты, live, турниры",
         canonical_url=f"{site_url}/",
-        og_title=site_name,
+        # Same as <title>: avoid og:title duplicating og:site_name in crawlers/snippets.
+        og_title=page_title,
         og_description=(
             "Смотрите расписание, результаты и статусы киберспортивных матчей. "
             "Обновляется ежедневно."
