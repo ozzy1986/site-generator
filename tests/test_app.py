@@ -40,11 +40,18 @@ class TestGenerateEndpoint:
     @patch("app.generate_site")
     @patch("app.Config.from_env")
     def test_success(self, mock_config, mock_gen, client) -> None:
-        mock_gen.return_value = {"yesterday": 5, "today": 10, "tomorrow": 8}
+        mock_gen.return_value = {
+            "yesterday": 5,
+            "today": 10,
+            "tomorrow": 8,
+            "duration_seconds": 3.0,
+        }
         resp = client.post("/generate")
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["success"] is True
+        assert "Сайт успешно собран и обновлён за 3 секунды." == data["message"]
+        assert data["counts"] == {"yesterday": 5, "today": 10, "tomorrow": 8}
 
     @patch("app.Config.from_env", side_effect=ValueError("PANDASCORE_TOKEN"))
     def test_missing_token(self, mock_config, client) -> None:

@@ -121,6 +121,8 @@ class TestGenerateSiteIntegration:
         assert 'decoding="async"' in today_html
         assert 'fetchpriority="low"' in today_html
         assert result["today"] >= 0
+        assert isinstance(result.get("duration_seconds"), (int, float))
+        assert result["duration_seconds"] >= 0
 
     @patch("site_generator.services.generator.PandaScoreClient")
     def test_normalizes_output_permissions_after_generation(

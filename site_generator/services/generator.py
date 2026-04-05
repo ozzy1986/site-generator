@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import tempfile
+import time
 from datetime import date, datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 from typing import Any
@@ -115,8 +116,9 @@ def _fetch_matches_for_day_isolated(
 def generate_site(config: Config) -> dict[str, Any]:
     """Fetch data, render templates, and write the static site atomically.
 
-    Returns a summary dict with per-day match counts.
+    Returns a summary dict with per-day match counts and ``duration_seconds``.
     """
+    t0 = time.perf_counter()
     site_tz = ZoneInfo(config.site_timezone)
     yesterday_date, today_date, tomorrow_date = compute_day_dates(site_tz)
     logger.info(
@@ -155,11 +157,13 @@ def generate_site(config: Config) -> dict[str, Any]:
         shutil.copytree(tmp_path, config.output_dir)
         _ensure_public_permissions(config.output_dir)
 
-    logger.info("Site generated in %s", config.output_dir)
+    elapsed = time.perf_counter() - t0
+    logger.info("Site generated in %.2fs at %s", elapsed, config.output_dir)
     return {
         "yesterday": len(schedules["yesterday"].matches),
         "today": len(schedules["today"].matches),
         "tomorrow": len(schedules["tomorrow"].matches),
+        "duration_seconds": round(elapsed, 2),
     }
 
 

@@ -26,6 +26,29 @@ _SYSTEMD_SERVICE_UNIT = "site-generator.service"
 _JOURNAL_TAIL_LINES = 10
 
 
+def _ru_seconds_word(n: int) -> str:
+    """Return секунда/секунды/секунд for integer *n* (Russian plural rules)."""
+    n = abs(n) % 100
+    if 11 <= n <= 14:
+        return "секунд"
+    r = n % 10
+    if r == 1:
+        return "секунду"
+    if r in (2, 3, 4):
+        return "секунды"
+    return "секунд"
+
+
+def _build_success_message(duration_seconds: float) -> str:
+    """User-facing line with measured wall time (matches admin report style)."""
+    s = max(0.0, float(duration_seconds))
+    if abs(s - round(s)) < 0.001:
+        n = int(round(s))
+        return f"Сайт успешно собран и обновлён за {n} {_ru_seconds_word(n)}."
+    num_str = f"{s:.1f}".replace(".", ",")
+    return f"Сайт успешно собран и обновлён за {num_str} секунды."
+
+
 def _read_service_journal_tail() -> tuple[bool, str, list[str]]:
     """Return (ok, error_message, lines) from journalctl for the Flask service unit."""
     if os.name == "nt":
@@ -89,9 +112,10 @@ def generate() -> tuple:
     try:
         config = Config.from_env(base_dir=_BASE_DIR)
         result = generate_site(config)
+        duration = float(result.pop("duration_seconds", 0.0))
         return jsonify({
             "success": True,
-            "message": "Сайт успешно собран и обновлён.",
+            "message": _build_success_message(duration),
             "counts": result,
         }), 200
     except PandaScoreError as exc:
