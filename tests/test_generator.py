@@ -100,7 +100,7 @@ class TestGenerateSiteIntegration:
         )
 
         instance = MockClient.return_value.__enter__.return_value
-        instance.fetch_matches_for_day.return_value = [make_raw_match()]
+        instance.fetch_matches_for_day.return_value = [make_raw_match(id=i) for i in range(1, 5)]
 
         result = generate_site(config)
 
@@ -112,9 +112,14 @@ class TestGenerateSiteIntegration:
         today_html = (config.output_dir / "today" / "index.html").read_text(encoding="utf-8")
         assert "Киберспорт без лишнего шума" not in home_html
         assert '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' in home_html
+        assert 'rel="preconnect" href="https://cdn.pandascore.co"' in home_html
         assert "Матчи по дням" in home_html
         assert "Часовой пояс: МСК" in today_html
         assert "17:00 МСК" in today_html
+        assert 'loading="eager"' in today_html
+        assert 'loading="lazy"' in today_html
+        assert 'decoding="async"' in today_html
+        assert 'fetchpriority="low"' in today_html
         assert result["today"] >= 0
 
     @patch("site_generator.services.generator.PandaScoreClient")

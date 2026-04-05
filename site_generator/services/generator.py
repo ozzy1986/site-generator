@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 import logging
 import os
@@ -19,6 +20,8 @@ from site_generator.services.schema import build_home_jsonld, build_jsonld_block
 from site_generator.services.seo import PageSeo, build_day_seo, build_home_seo
 
 logger = logging.getLogger(__name__)
+
+_DAY_FETCH_WORKERS = 3
 
 _MONTH_NAMES_RU = {
     1: "января",
@@ -95,6 +98,16 @@ def timezone_label(site_timezone: str) -> str:
     return _TIMEZONE_LABELS.get(site_timezone, site_timezone)
 
 
+def _fetch_matches_for_day_isolated(
+    token: str,
+    target_date: date,
+    site_tz: tzinfo,
+) -> list[dict[str, Any]]:
+    """Fetch one day in a dedicated client (thread-safe vs shared Session)."""
+    with PandaScoreClient(token) as client:
+        return client.fetch_matches_for_day(target_date, site_tz)
+
+
 # ------------------------------------------------------------------
 # Orchestrator
 # ------------------------------------------------------------------
@@ -111,10 +124,15 @@ def generate_site(config: Config) -> dict[str, Any]:
         yesterday_date, today_date, tomorrow_date, config.site_timezone,
     )
 
-    with PandaScoreClient(config.pandascore_token) as client:
-        raw_yesterday = client.fetch_matches_for_day(yesterday_date, site_tz)
-        raw_today = client.fetch_matches_for_day(today_date, site_tz)
-        raw_tomorrow = client.fetch_matches_for_day(tomorrow_date, site_tz)
+    token = config.pandascore_token
+    # Keep concurrency bounded to the three day buckets we actually generate.
+    with ThreadPoolExecutor(max_workers=_DAY_FETCH_WORKERS) as pool:
+        f_y = pool.submit(_fetch_matches_for_day_isolated, token, yesterday_date, site_tz)
+        f_t = pool.submit(_fetch_matches_for_day_isolated, token, today_date, site_tz)
+        f_tm = pool.submit(_fetch_matches_for_day_isolated, token, tomorrow_date, site_tz)
+        raw_yesterday = f_y.result()
+        raw_today = f_t.result()
+        raw_tomorrow = f_tm.result()
 
     schedules = {
         "yesterday": build_day_schedule(

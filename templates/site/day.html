@@ -13,10 +13,11 @@
 {% if schedule.matches %}
 <div class="matches-grid">
     {% for match in schedule.matches %}
+    {% set eager_match_assets = loop.index <= 3 %}
     <article class="match-card match-card--{{ match.status }}" data-id="{{ match.id }}">
         <div class="match-card__header">
             {% if match.tournament.league_image_url %}
-            <img src="{{ match.tournament.league_image_url }}" alt="" class="match-card__league-logo" width="20" height="20" loading="lazy">
+            <img src="{{ match.tournament.league_image_url }}" alt="" class="match-card__league-logo" width="20" height="20" loading="{{ 'eager' if eager_match_assets else 'lazy' }}" decoding="async"{% if not eager_match_assets %} fetchpriority="low"{% endif %}>
             {% endif %}
             <span class="match-card__league">{{ match.tournament.league_name }}</span>
             <span class="match-card__separator">&middot;</span>
@@ -27,7 +28,7 @@
             {% if match.teams|length >= 2 %}
             <div class="match-card__team match-card__team--left">
                 {% if match.teams[0].thumb_image_url %}
-                <img src="{{ match.teams[0].thumb_image_url }}" alt="{{ match.teams[0].name }}" class="team-logo" width="36" height="36" loading="lazy">
+                <img src="{{ match.teams[0].thumb_image_url }}" alt="{{ match.teams[0].name }}" class="team-logo" width="36" height="36" loading="{{ 'eager' if eager_match_assets else 'lazy' }}" decoding="async"{% if not eager_match_assets %} fetchpriority="low"{% endif %}>
                 {% else %}
                 <span class="team-logo team-logo--placeholder"></span>
                 {% endif %}
@@ -46,7 +47,7 @@
             <div class="match-card__team match-card__team--right">
                 <span class="team-name{% if match.winner_id == match.teams[1].id %} team-name--winner{% endif %}">{{ match.teams[1].name }}</span>
                 {% if match.teams[1].thumb_image_url %}
-                <img src="{{ match.teams[1].thumb_image_url }}" alt="{{ match.teams[1].name }}" class="team-logo" width="36" height="36" loading="lazy">
+                <img src="{{ match.teams[1].thumb_image_url }}" alt="{{ match.teams[1].name }}" class="team-logo" width="36" height="36" loading="{{ 'eager' if eager_match_assets else 'lazy' }}" decoding="async"{% if not eager_match_assets %} fetchpriority="low"{% endif %}>
                 {% else %}
                 <span class="team-logo team-logo--placeholder"></span>
                 {% endif %}
