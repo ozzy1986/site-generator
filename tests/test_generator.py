@@ -112,6 +112,7 @@ class TestGenerateSiteIntegration:
         today_html = (config.output_dir / "today" / "index.html").read_text(encoding="utf-8")
         assert "Киберспорт без лишнего шума" not in home_html
         assert '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' in home_html
+        assert 'rel="preconnect" href="https://cdn-api.pandascore.co"' in home_html
         assert 'rel="preconnect" href="https://cdn.pandascore.co"' in home_html
         assert "Матчи по дням" in home_html
         assert "Часовой пояс: МСК" in today_html

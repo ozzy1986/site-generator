@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
-import logging
 import os
 import shutil
 import tempfile
@@ -19,8 +18,6 @@ from site_generator.models import DaySchedule, MatchCard, normalize_match
 from site_generator.pandascore_client import PandaScoreClient
 from site_generator.services.schema import build_home_jsonld, build_jsonld_block
 from site_generator.services.seo import PageSeo, build_day_seo, build_home_seo
-
-logger = logging.getLogger(__name__)
 
 _DAY_FETCH_WORKERS = 3
 
@@ -121,10 +118,6 @@ def generate_site(config: Config) -> dict[str, Any]:
     t0 = time.perf_counter()
     site_tz = ZoneInfo(config.site_timezone)
     yesterday_date, today_date, tomorrow_date = compute_day_dates(site_tz)
-    logger.info(
-        "Fetching PandaScore matches for %s / %s / %s in %s",
-        yesterday_date, today_date, tomorrow_date, config.site_timezone,
-    )
 
     token = config.pandascore_token
     # Keep concurrency bounded to the three day buckets we actually generate.
@@ -158,7 +151,6 @@ def generate_site(config: Config) -> dict[str, Any]:
         _ensure_public_permissions(config.output_dir)
 
     elapsed = time.perf_counter() - t0
-    logger.info("Site generated in %.2fs at %s", elapsed, config.output_dir)
     return {
         "yesterday": len(schedules["yesterday"].matches),
         "today": len(schedules["today"].matches),

@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import logging
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-logger = logging.getLogger(__name__)
 
 API_BASE = "https://api.pandascore.co"
 PAGE_SIZE = 100
@@ -118,10 +115,6 @@ class PandaScoreClient:
             raise PandaScoreError(403, "Access forbidden — check your PandaScore plan.")
         if resp.status_code >= 400:
             raise PandaScoreError(resp.status_code, resp.text[:300])
-
-        remaining = resp.headers.get("X-Rate-Limit-Remaining")
-        if remaining is not None:
-            logger.debug("PandaScore rate-limit remaining: %s", remaining)
 
         return resp
 

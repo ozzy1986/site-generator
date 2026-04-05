@@ -67,16 +67,6 @@
                 </article>
             </section>
 
-            <section class="journal-section" aria-labelledby="journal-heading">
-                <div class="journal-header">
-                    <div>
-                        <h2 id="journal-heading">Журнал сервиса</h2>
-                        <p class="journal-meta">Последние 10 строк: <code>site-generator.service</code> (systemd)</p>
-                    </div>
-                    <button id="btn-journal-refresh" type="button" class="btn btn-secondary btn-compact">Обновить</button>
-                </div>
-                <pre id="journal-log" class="journal-pre" aria-live="polite">Загрузка…</pre>
-            </section>
         </main>
     </div>
 
@@ -86,32 +76,6 @@
         var statusArea = document.getElementById('status');
         var spinner = document.getElementById('status-spinner');
         var msg = document.getElementById('status-message');
-        var journalPre = document.getElementById('journal-log');
-        var btnJournal = document.getElementById('btn-journal-refresh');
-
-        function loadJournal() {
-            if (!journalPre) return;
-            journalPre.textContent = 'Загрузка…';
-            fetch('/admin/service-log')
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.success && data.lines && data.lines.length) {
-                        journalPre.textContent = data.lines.join('\n');
-                    } else if (data.success && (!data.lines || !data.lines.length)) {
-                        journalPre.textContent = '(журнал пуст)';
-                    } else {
-                        journalPre.textContent = data.message || 'Не удалось прочитать журнал.';
-                    }
-                })
-                .catch(function (err) {
-                    journalPre.textContent = 'Ошибка сети: ' + err;
-                });
-        }
-
-        if (btnJournal) {
-            btnJournal.addEventListener('click', loadJournal);
-        }
-        loadJournal();
 
         function setStatus(html, isError) {
             statusArea.hidden = false;
@@ -139,7 +103,6 @@
                             ' &middot; Завтра: ' + (c.tomorrow || 0) + '</small>',
                             false
                         );
-                        loadJournal();
                     } else {
                         setStatus(res.data.message, true);
                     }

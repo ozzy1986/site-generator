@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import io
 import logging
-import os
-import subprocess
 import zipfile
 from pathlib import Path
 
@@ -13,17 +11,11 @@ from site_generator.config import Config
 from site_generator.pandascore_client import PandaScoreError
 from site_generator.services.generator import generate_site
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-
 app = Flask(__name__)
+app.logger.disabled = True
+logging.getLogger("werkzeug").disabled = True
 
 _BASE_DIR = Path(__file__).resolve().parent
-
-_SYSTEMD_SERVICE_UNIT = "site-generator.service"
-_JOURNAL_TAIL_LINES = 10
 
 
 def _ru_seconds_word(n: int) -> str:
@@ -47,41 +39,6 @@ def _build_success_message(duration_seconds: float) -> str:
         return f"Сайт успешно собран и обновлён за {n} {_ru_seconds_word(n)}."
     num_str = f"{s:.1f}".replace(".", ",")
     return f"Сайт успешно собран и обновлён за {num_str} секунды."
-
-
-def _read_service_journal_tail() -> tuple[bool, str, list[str]]:
-    """Return (ok, error_message, lines) from journalctl for the Flask service unit."""
-    if os.name == "nt":
-        return False, "Журнал systemd доступен только на сервере Linux.", []
-
-    try:
-        proc = subprocess.run(
-            [
-                "journalctl",
-                "-u",
-                _SYSTEMD_SERVICE_UNIT,
-                "-n",
-                str(_JOURNAL_TAIL_LINES),
-                "--no-pager",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=8,
-            check=False,
-        )
-    except FileNotFoundError:
-        return False, "Команда journalctl не найдена.", []
-    except subprocess.TimeoutExpired:
-        return False, "Таймаут при чтении журнала.", []
-
-    out = (proc.stdout or "").strip()
-    err = (proc.stderr or "").strip()
-    if proc.returncode != 0:
-        msg = err or out or f"journalctl завершился с кодом {proc.returncode}"
-        return False, msg, []
-
-    lines = out.splitlines() if out else []
-    return True, "", lines
 
 
 def _zip_output_directory(output_dir: Path) -> io.BytesIO:
@@ -123,17 +80,7 @@ def generate() -> tuple:
     except ValueError as exc:
         return jsonify({"success": False, "message": str(exc)}), 400
     except Exception as exc:
-        logging.getLogger(__name__).exception("Generation failed")
         return jsonify({"success": False, "message": f"Непредвиденная ошибка: {exc}"}), 500
-
-
-@app.route("/service-log", methods=["GET"])
-def service_log():
-    """Last lines of systemd journal for site-generator.service (JSON)."""
-    ok, err, lines = _read_service_journal_tail()
-    if ok:
-        return jsonify({"success": True, "lines": lines})
-    return jsonify({"success": False, "message": err}), 200
 
 
 @app.route("/download-site", methods=["GET"])
